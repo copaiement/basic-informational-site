@@ -1,22 +1,15 @@
 const http = require('http');
 
-const options = {
-  hostname: 'localhost',
-  port: 8080,
-  path: '',
-  method: 'GET',
+const host = 'localhost';
+const port = 8080;
+
+const requestListener = function (req, res) {
+  res.writeHead(200);
+  res.end('My first server!');
 };
 
-const req = http.request(options, res => {
-  console.log(`statusCode: ${res.statusCode}`);
+const server = http.createServer(requestListener);
 
-  res.on('data', d => {
-    process.stdout.write(d);
-  });
+server.listen(port, host, () => {
+  console.log(`Server is running on http://${host}:${port}`);
 });
-
-req.on('error', error => {
-  console.error(error);
-});
-
-req.end();
