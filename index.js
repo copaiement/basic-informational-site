@@ -1,63 +1,32 @@
 const http = require('http');
-const fs = require('fs').promises;
+const fs = require('fs');
 
 const host = 'localhost';
 const port = 8080;
 
-let indexFile;
-
-const requestListener = function (req, res) {
-  res.setHeader('Content-Type', 'text/html');
-  switch (req.url) {
-    case '':
-      res.writeHead(200);
-      res.end(indexFile);
-      break;
-    case '/about':
-      console.log('here');
-      res.writeHead(200);
-      res.end(indexFile);
-      break;
-    case '/contact':
-      res.writeHead(200);
-      res.end(indexFile);
-      break;
-    default:
-      res.writeHead(404);
-      res.end(indexFile);
+http.createServer((req, res) => {
+  let fileName = '';
+  const reqURL = new URL(req.url, `http://${host}:${port}/`);
+  if (reqURL.pathname === '/') {
+    fileName = './index.html';
+  } else {
+    fileName = `.${reqURL.pathname}.html`;
   }
-};
 
-const server = http.createServer(requestListener);
+  fs.readFile(fileName, (err, data) => {
+    if (err) {
+      res.writeHead(404, { 'Content-Type': 'text/html' });
+      res.write(
+        fs.readFileSync('./404.html', (err, data) => {
+          if (err) throw (err);
+          return data;
+        })
+      );
+      return res.end();
+    }
 
-fs.readFile(__dirname + '/index.html')
-  .then(contents => {
-    indexFile = contents;
-    server.listen(port, host, () => {
-      console.log(`Server is running on http://${host}:${port}`);
-    });
-  })
-  .catch(err => {
-    console.error(`Could not read file: ${err}`);
-    process.exit(1);
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.write(data);
+    return res.end();
   });
-
-// const requestListener = function (req, res) {
-//   fs.readFile(__dirname + '/index.html')
-//     .then(contents => {
-//       res.setHeader('Content-Type', 'text/html');
-//       res.writeHead(200);
-//       res.end(contents);
-//     })
-//     .catch(err => {
-//       res.writeHead(500);
-//       res.end(err);
-//       return;
-//     });
-// };
-
-// const server = http.createServer(requestListener);
-
-// server.listen(port, host, () => {
-//   console.log(`Server is running on http://${host}:${port}`);
-// });
+}).listen(port);
